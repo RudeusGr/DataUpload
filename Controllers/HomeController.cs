@@ -27,6 +27,13 @@ namespace DataUpload.Controllers
         [HttpPost]
         public IActionResult LoadData(IFormFile fileExcel)
         {
+            var fileStrem = fileExcel.FileName.Split('.');
+            if (!fileStrem[fileStrem.Length-1].Equals("xlsx"))
+            {
+                ViewBag.Error = "El archivo enviado no es un archivo de Excel valido, los archivos de Excel tiene la extencion 'xlsx'";
+                return View("Index");
+            }
+
             XLWorkbook workbook = new XLWorkbook(fileExcel.OpenReadStream());
 
             IXLWorksheet sheet = workbook.Worksheet(1);
@@ -34,24 +41,36 @@ namespace DataUpload.Controllers
             int firstrow = sheet.FirstRowUsed().RangeAddress.FirstAddress.RowNumber;
             int lastrow = sheet.LastRowUsed().RangeAddress.FirstAddress.RowNumber;
 
-            List<Assistance> listAssistance = new List<Assistance>();
-
-            for (int i = firstrow; i < lastrow; i++)
-            {
-                IXLRow row = sheet.Row(i);
-                Assistance assistance = new Assistance();
-                assistance.Date = row.Cell(1).GetValue<DateTime>();
-                assistance.Route = row.Cell(2).GetValue<int>();
-                assistance.CVEmploye = row.Cell(3).GetString();
-                listAssistance.Add(assistance);
-            }
-
             using (SqlConnection DBConnection = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")))
             {
+                DBConnection.Open();
                 string sqlQuery = "INSERT INTO assistances(date,route,cvemployee) VALUES (@Date,@Route,@CVEmploye)";
-                var result = DBConnection.Execute(sqlQuery, listAssistance);
-            }
 
+                using (var transaction = DBConnection.BeginTransaction())
+                {
+                    try
+                    {
+                        for (int i = firstrow; i < lastrow; i++)
+                        {
+                            IXLRow row = sheet.Row(i);
+                            Assistance assistance = new Assistance();
+                            assistance.Date = row.Cell(1).GetValue<DateTime>();
+                            assistance.Route = row.Cell(2).GetValue<int>();
+                            assistance.CVEmploye = row.Cell(3).GetString();
+                            DBConnection.Execute(sqlQuery, assistance, transaction: transaction);
+                        }
+                        transaction.Commit();
+                        ViewBag.Success = "Asistencias registradas correctamente.";
+                    }
+                    catch (Exception err)
+                    {
+                        ViewBag.Error = "Sucedio un Error al registrar las asistencias, por favor revise el archivo enviado. Error:" + err.Message;
+                        transaction.Rollback();
+                    }
+                }
+
+                DBConnection.Close();
+            }
             return View("Index");
         }
 

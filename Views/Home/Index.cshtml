@@ -10,11 +10,29 @@
         <h1>Archivo De Asistencias</h1>
         <form method="post" asp-action="LoadData" enctype="multipart/form-data" class="row">
             <div class="col-12 m-2">
-                <input type="file" class="form-control" name="fileExcel" id="fileExcel">
+                <input type="file" class="form-control" name="fileExcel" id="fileExcel" required>
             </div>
             <div class="col-12 m-2">
                 <button type="submit" class="btn btn-secondary">Subir Archivo</button>
             </div>
         </form>
     </div>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="m-2">
+            <div class="alert alert-primary" role="alert">
+                @ViewBag.Success
+            </div>
+        </div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="m-2">
+            <div class="alert alert-danger" role="alert">
+                @ViewBag.Error
+            </div>
+        </div>
+    }
 </div>
