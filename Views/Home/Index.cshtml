@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <div class="p-5">
+        <p>
+            <img src="~/assets/logo.png" alt="Logo Grupo Modelo" width="150" height="150" />
+        </p>
+        <h1>Archivo De Asistencias</h1>
+        <form method="post" asp-action="LoadData" enctype="multipart/form-data" class="row">
+            <div class="col-12 m-2">
+                <input type="file" class="form-control" name="fileExcel" id="fileExcel">
+            </div>
+            <div class="col-12 m-2">
+                <button type="submit" class="btn btn-secondary">Subir Archivo</button>
+            </div>
+        </form>
+    </div>
+</div>
